@@ -37,40 +37,11 @@ local AimbotTeamCheck = true
 
 -- ABA VISUAL
 local VisualTab = Window:CreateTab("Visual", 4483362458)
-VisualTab:CreateToggle({
-    Name = "ESP",
-    CurrentValue = false,
-    Flag = "ESP_Toggle",
-    Callback = function(Value) ESPEnabled = Value end,
-})
-
-VisualTab:CreateToggle({
-    Name = "Mostrar Caixa",
-    CurrentValue = true,
-    Flag = "ESP_ShowBox",
-    Callback = function(Value) ESPShowBox = Value end,
-})
-
-VisualTab:CreateToggle({
-    Name = "Mostrar Nome",
-    CurrentValue = true,
-    Flag = "ESP_ShowName",
-    Callback = function(Value) ESPShowName = Value end,
-})
-
-VisualTab:CreateToggle({
-    Name = "Mostrar Vida",
-    CurrentValue = true,
-    Flag = "ESP_ShowHealth",
-    Callback = function(Value) ESPShowHealth = Value end,
-})
-
-VisualTab:CreateToggle({
-    Name = "Mostrar Distância",
-    CurrentValue = true,
-    Flag = "ESP_ShowDistance",
-    Callback = function(Value) ESPShowDistance = Value end,
-})
+VisualTab:CreateToggle({Name = "ESP", CurrentValue = false, Flag = "ESP_Toggle", Callback = function(Value) ESPEnabled = Value end})
+VisualTab:CreateToggle({Name = "Mostrar Caixa", CurrentValue = true, Flag = "ESP_ShowBox", Callback = function(Value) ESPShowBox = Value end})
+VisualTab:CreateToggle({Name = "Mostrar Nome", CurrentValue = true, Flag = "ESP_ShowName", Callback = function(Value) ESPShowName = Value end})
+VisualTab:CreateToggle({Name = "Mostrar Vida", CurrentValue = true, Flag = "ESP_ShowHealth", Callback = function(Value) ESPShowHealth = Value end})
+VisualTab:CreateToggle({Name = "Mostrar Distância", CurrentValue = true, Flag = "ESP_ShowDistance", Callback = function(Value) ESPShowDistance = Value end})
 
 -- ESP + CHAMS
 local function CreateESP(player)
@@ -89,7 +60,6 @@ local function CreateESP(player)
     info.Center = true
     info.Outline = true
 
-    -- Cor por time
     local teamColor = player.Team and player.Team.TeamColor.Color or Color3.fromRGB(255, 255, 255)
     box.Color = teamColor
     name.Color = teamColor
@@ -120,7 +90,6 @@ local function RemoveESP(player)
     end
 end
 
--- LOOP ESP
 RunService.RenderStepped:Connect(function()
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
@@ -173,46 +142,11 @@ end)
 -- AIMBOT ABA
 local AimbotTab = Window:CreateTab("Aimbot", 4483362458)
 
-AimbotTab:CreateToggle({
-    Name = "Ativar Aimbot",
-    CurrentValue = false,
-    Flag = "AimbotToggle",
-    Callback = function(v) AimbotEnabled = v end
-})
-
-AimbotTab:CreateSlider({
-    Name = "FOV",
-    Range = {50, 500},
-    Increment = 10,
-    Suffix = "px",
-    CurrentValue = AimbotFOV,
-    Flag = "FOVSlider",
-    Callback = function(v) AimbotFOV = v end
-})
-
-AimbotTab:CreateSlider({
-    Name = "Suavidade",
-    Range = {0, 1},
-    Increment = 0.01,
-    Suffix = "",
-    CurrentValue = AimbotSmoothness,
-    Flag = "SmoothSlider",
-    Callback = function(v) AimbotSmoothness = v end
-})
-
-AimbotTab:CreateToggle({
-    Name = "Wall Check",
-    CurrentValue = true,
-    Flag = "WallCheckToggle",
-    Callback = function(v) AimbotWallCheck = v end
-})
-
-AimbotTab:CreateToggle({
-    Name = "Team Check",
-    CurrentValue = true,
-    Flag = "TeamCheckToggle",
-    Callback = function(v) AimbotTeamCheck = v end
-})
+AimbotTab:CreateToggle({Name = "Ativar Aimbot", CurrentValue = false, Flag = "AimbotToggle", Callback = function(v) AimbotEnabled = v end})
+AimbotTab:CreateSlider({Name = "FOV", Range = {50, 500}, Increment = 10, Suffix = "px", CurrentValue = AimbotFOV, Flag = "FOVSlider", Callback = function(v) AimbotFOV = v end})
+AimbotTab:CreateSlider({Name = "Suavidade", Range = {0, 1}, Increment = 0.01, CurrentValue = AimbotSmoothness, Flag = "SmoothSlider", Callback = function(v) AimbotSmoothness = v end})
+AimbotTab:CreateToggle({Name = "Wall Check", CurrentValue = true, Flag = "WallCheckToggle", Callback = function(v) AimbotWallCheck = v end})
+AimbotTab:CreateToggle({Name = "Team Check", CurrentValue = true, Flag = "TeamCheckToggle", Callback = function(v) AimbotTeamCheck = v end})
 
 -- DRAW FOV
 local fovCircle = Drawing.new("Circle")
@@ -229,7 +163,6 @@ RunService.RenderStepped:Connect(function()
     fovCircle.Radius = AimbotFOV
 end)
 
--- FUNÇÃO DE WALL CHECK
 local function IsVisible(targetPart)
     local origin = Camera.CFrame.Position
     local ray = Ray.new(origin, (targetPart.Position - origin).Unit * 500)
@@ -237,16 +170,11 @@ local function IsVisible(targetPart)
     return hit == nil or hit:IsDescendantOf(targetPart.Parent)
 end
 
--- FUNÇÃO DE AIMBOT
 local function GetClosestTarget()
     local closestPlayer, shortestDistance = nil, AimbotFOV
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
-            -- Checar se está no mesmo time
-            if AimbotTeamCheck and player.Team == LocalPlayer.Team then
-                continue
-            end
-
+            if AimbotTeamCheck and player.Team == LocalPlayer.Team then continue end
             local head = player.Character.Head
             local pos, visible = Camera:WorldToViewportPoint(head.Position)
             if visible then
@@ -263,15 +191,10 @@ local function GetClosestTarget()
     return closestPlayer
 end
 
--- LOOP AIMBOT
 RunService.RenderStepped:Connect(function()
     if AimbotEnabled then
         local target = GetClosestTarget()
         if target then
             local camPos = Camera.CFrame.Position
             local direction = (target.Position - camPos).Unit
-            local newPos = camPos + direction * AimbotSmoothness
-            Camera.CFrame = CFrame.new(camPos, newPos)
-        end
-    end
-end)
+            local newPos = camPos + direction *
