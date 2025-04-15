@@ -1,3 +1,4 @@
+-- RAYFIELD
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
@@ -8,107 +9,100 @@ local Window = Rayfield:CreateWindow({
     Theme = "Default",
     DisableRayfieldPrompts = false,
     DisableBuildWarnings = false,
-    ConfigurationSaving = {
-       Enabled = true,
-       FolderName = nil,
-       FileName = "Big Hub"
-    },
-    Discord = {
-       Enabled = false,
-       Invite = "noinvitelink",
-       RememberJoins = false
-    },
-    KeySystem = false,
-    KeySettings = {
-       Title = "Untitled",
-       Subtitle = "Key System",
-       Note = "No method of obtaining the key is provided",
-       FileName = "Key",
-       SaveKey = true,
-       GrabKeyFromSite = false,
-       Key = {"Hello"}
-    }
+    ConfigurationSaving = {Enabled = true, FileName = "Big Hub"},
+    Discord = {Enabled = false, Invite = "noinvitelink", RememberJoins = false},
+    KeySystem = false
 })
 
--- ⚙️ Serviços e Variáveis
+-- VARIÁVEIS BASE
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
 local LocalPlayer = Players.LocalPlayer
-local ESPEnabled = false
 local ESPObjects = {}
 
--- 📁 Cria a aba e toggle
-local VisualTab = Window:CreateTab("Visual", 4483362458)
+-- ESP TOGGLE
+local ESPEnabled = false
 
+-- AIMBOT VARIÁVEIS
+local AimbotEnabled = false
+local AimbotFOV = 150
+local AimbotSmoothness = 0.1
+local AimbotWallCheck = true
+
+-- ABA VISUAL
+local VisualTab = Window:CreateTab("Visual", 4483362458)
 VisualTab:CreateToggle({
     Name = "ESP",
     CurrentValue = false,
     Flag = "ESP_Toggle",
-    Callback = function(Value)
-        ESPEnabled = Value
-    end,
+    Callback = function(Value) ESPEnabled = Value end,
 })
 
--- 📦 Cria ESP
+-- ESP + CHAMS
 local function CreateESP(player)
     local box = Drawing.new("Square")
     box.Thickness = 1
     box.Transparency = 1
-    box.Color = Color3.fromRGB(255, 255, 0)
     box.Filled = false
 
     local name = Drawing.new("Text")
     name.Size = 14
     name.Center = true
     name.Outline = true
-    name.Color = Color3.fromRGB(255, 255, 255)
 
     local info = Drawing.new("Text")
     info.Size = 13
     info.Center = true
     info.Outline = true
-    info.Color = Color3.fromRGB(0, 255, 0)
 
-    ESPObjects[player] = {Box = box, Name = name, Info = info}
+    -- Cor por time
+    local teamColor = player.Team and player.Team.TeamColor.Color or Color3.fromRGB(255, 255, 255)
+    box.Color = teamColor
+    name.Color = teamColor
+    info.Color = Color3.new(0, 255, 0)
+
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "XenzChams"
+    highlight.FillColor = teamColor
+    highlight.FillTransparency = 0.5
+    highlight.OutlineColor = Color3.new(0, 0, 0)
+    highlight.OutlineTransparency = 0
+    highlight.Adornee = player.Character
+    highlight.Parent = game.CoreGui
+
+    ESPObjects[player] = {Box = box, Name = name, Info = info, Chams = highlight}
 end
 
--- ❌ Remove ESP
 local function RemoveESP(player)
     if ESPObjects[player] then
         for _, obj in pairs(ESPObjects[player]) do
-            obj:Remove()
+            if typeof(obj) == "Instance" then
+                obj:Destroy()
+            else
+                obj:Remove()
+            end
         end
         ESPObjects[player] = nil
     end
 end
 
--- 🔁 Loop de Renderização
+-- LOOP ESP
 RunService.RenderStepped:Connect(function()
-    if not ESPEnabled then
-        for _, esp in pairs(ESPObjects) do
-            for _, obj in pairs(esp) do
-                obj.Visible = false
-            end
-        end
-        return
-    end
-
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
             if not ESPObjects[player] then
                 CreateESP(player)
             end
 
+            local esp = ESPObjects[player]
             local root = player.Character:FindFirstChild("HumanoidRootPart")
             local head = player.Character:FindFirstChild("Head")
             local humanoid = player.Character:FindFirstChild("Humanoid")
             local pos, onScreen = Camera:WorldToViewportPoint(root.Position)
 
-            local esp = ESPObjects[player]
-
-            if onScreen then
-                local distance = math.floor((root.Position - Camera.CFrame.Position).Magnitude)
+            if ESPEnabled and onScreen then
+                local distance = (root.Position - Camera.CFrame.Position).Magnitude
                 local size = Vector2.new(50, 100) / (distance / 50)
                 local topLeft = Vector2.new(pos.X - size.X / 2, pos.Y - size.Y / 2)
 
@@ -121,15 +115,112 @@ RunService.RenderStepped:Connect(function()
                 esp.Name.Visible = true
 
                 esp.Info.Position = Vector2.new(pos.X, pos.Y + size.Y / 2 + 5)
-                esp.Info.Text = "HP: " .. math.floor(humanoid.Health) .. " | " .. distance .. "m"
+                esp.Info.Text = "HP: " .. math.floor(humanoid.Health) .. " | " .. math.floor(distance) .. "m"
                 esp.Info.Visible = true
+
+                if esp.Chams then esp.Chams.Enabled = true end
             else
                 for _, obj in pairs(esp) do
-                    obj.Visible = false
+                    if typeof(obj) ~= "Instance" then obj.Visible = false end
+                    if typeof(obj) == "Instance" and obj:IsA("Highlight") then obj.Enabled = false end
                 end
             end
         else
             RemoveESP(player)
+        end
+    end
+end)
+
+-- AIMBOT ABA
+local AimbotTab = Window:CreateTab("Aimbot", 4483362458)
+
+AimbotTab:CreateToggle({
+    Name = "Ativar Aimbot",
+    CurrentValue = false,
+    Flag = "AimbotToggle",
+    Callback = function(v) AimbotEnabled = v end
+})
+
+AimbotTab:CreateSlider({
+    Name = "FOV",
+    Range = {50, 500},
+    Increment = 10,
+    Suffix = "px",
+    CurrentValue = AimbotFOV,
+    Flag = "FOVSlider",
+    Callback = function(v) AimbotFOV = v end
+})
+
+AimbotTab:CreateSlider({
+    Name = "Suavidade",
+    Range = {0, 1},
+    Increment = 0.01,
+    Suffix = "",
+    CurrentValue = AimbotSmoothness,
+    Flag = "SmoothSlider",
+    Callback = function(v) AimbotSmoothness = v end
+})
+
+AimbotTab:CreateToggle({
+    Name = "Wall Check",
+    CurrentValue = true,
+    Flag = "WallCheckToggle",
+    Callback = function(v) AimbotWallCheck = v end
+})
+
+-- DRAW FOV
+local fovCircle = Drawing.new("Circle")
+fovCircle.Color = Color3.fromRGB(255, 255, 255)
+fovCircle.Thickness = 1
+fovCircle.NumSides = 100
+fovCircle.Radius = AimbotFOV
+fovCircle.Filled = false
+fovCircle.Transparency = 1
+
+RunService.RenderStepped:Connect(function()
+    fovCircle.Visible = AimbotEnabled
+    fovCircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+    fovCircle.Radius = AimbotFOV
+end)
+
+-- FUNÇÃO DE WALL CHECK
+local function IsVisible(targetPart)
+    local origin = Camera.CFrame.Position
+    local ray = Ray.new(origin, (targetPart.Position - origin).Unit * 500)
+    local hit = workspace:FindPartOnRay(ray, LocalPlayer.Character, false, true)
+    return hit == nil or hit:IsDescendantOf(targetPart.Parent)
+end
+
+-- FUNÇÃO DE AIMBOT
+local function GetClosestTarget()
+    local closestPlayer, shortestDistance = nil, AimbotFOV
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+            local head = player.Character.Head
+            local pos, visible = Camera:WorldToViewportPoint(head.Position)
+            if visible then
+                local mouseDist = (Vector2.new(pos.X, pos.Y) - Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)).Magnitude
+                if mouseDist < shortestDistance then
+                    if not AimbotWallCheck or IsVisible(head) then
+                        closestPlayer = head
+                        shortestDistance = mouseDist
+                    end
+                end
+            end
+        end
+    end
+    return closestPlayer
+end
+
+-- LOOP AIMBOT
+RunService.RenderStepped:Connect(function()
+    if AimbotEnabled then
+        local target = GetClosestTarget()
+        if target then
+            local camPos = Camera.CFrame.Position
+            local direction = (target.Position - camPos).Unit
+            local newPos = camPos + direction * AimbotSmoothness
+            Camera.CFrame = CFrame.new(camPos, newPos)
         end
     end
 end)
