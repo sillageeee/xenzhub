@@ -10,7 +10,7 @@ local Window = Rayfield:CreateWindow({
     DisableRayfieldPrompts = false,
     DisableBuildWarnings = false,
     ConfigurationSaving = {Enabled = true, FileName = "Xenz Hub"},
-    Discord = {Enabled = false, Invite = "noinvitelink", RememberJoins = false},
+    Discord = {false = false, Invite = "noinvitelink", RememberJoins = false},
     KeySystem = false
 })
 
