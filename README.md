@@ -9,9 +9,9 @@ local Window = Rayfield:CreateWindow({
     Theme = "Default",
     DisableRayfieldPrompts = false,
     DisableBuildWarnings = false,
-    ConfigurationSaving = {Enabled = true, FileName = "Big Hub"},
+    ConfigurationSaving = {Enabled = true, FileName = "Xenz Hub"},
     Discord = {Enabled = false, Invite = "noinvitelink", RememberJoins = false},
-    KeySystem = true
+    KeySystem = false
 })
 
 -- VARIÁVEIS BASE
