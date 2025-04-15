@@ -11,7 +11,7 @@ local Window = Rayfield:CreateWindow({
     DisableBuildWarnings = false,
     ConfigurationSaving = {Enabled = true, FileName = "Big Hub"},
     Discord = {Enabled = false, Invite = "noinvitelink", RememberJoins = false},
-    KeySystem = false
+    KeySystem = true
 })
 
 -- VARIÁVEIS BASE
