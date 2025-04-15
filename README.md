@@ -23,12 +23,17 @@ local ESPObjects = {}
 
 -- ESP TOGGLE
 local ESPEnabled = false
+local ESPShowBox = true
+local ESPShowName = true
+local ESPShowHealth = true
+local ESPShowDistance = true
 
 -- AIMBOT VARIÁVEIS
 local AimbotEnabled = false
 local AimbotFOV = 150
 local AimbotSmoothness = 0.1
 local AimbotWallCheck = true
+local AimbotTeamCheck = true
 
 -- ABA VISUAL
 local VisualTab = Window:CreateTab("Visual", 4483362458)
@@ -37,6 +42,34 @@ VisualTab:CreateToggle({
     CurrentValue = false,
     Flag = "ESP_Toggle",
     Callback = function(Value) ESPEnabled = Value end,
+})
+
+VisualTab:CreateToggle({
+    Name = "Mostrar Caixa",
+    CurrentValue = true,
+    Flag = "ESP_ShowBox",
+    Callback = function(Value) ESPShowBox = Value end,
+})
+
+VisualTab:CreateToggle({
+    Name = "Mostrar Nome",
+    CurrentValue = true,
+    Flag = "ESP_ShowName",
+    Callback = function(Value) ESPShowName = Value end,
+})
+
+VisualTab:CreateToggle({
+    Name = "Mostrar Vida",
+    CurrentValue = true,
+    Flag = "ESP_ShowHealth",
+    Callback = function(Value) ESPShowHealth = Value end,
+})
+
+VisualTab:CreateToggle({
+    Name = "Mostrar Distância",
+    CurrentValue = true,
+    Flag = "ESP_ShowDistance",
+    Callback = function(Value) ESPShowDistance = Value end,
 })
 
 -- ESP + CHAMS
@@ -106,17 +139,23 @@ RunService.RenderStepped:Connect(function()
                 local size = Vector2.new(50, 100) / (distance / 50)
                 local topLeft = Vector2.new(pos.X - size.X / 2, pos.Y - size.Y / 2)
 
-                esp.Box.Size = size
-                esp.Box.Position = topLeft
-                esp.Box.Visible = true
+                if ESPShowBox then
+                    esp.Box.Size = size
+                    esp.Box.Position = topLeft
+                    esp.Box.Visible = true
+                end
 
-                esp.Name.Position = Vector2.new(pos.X, topLeft.Y - 16)
-                esp.Name.Text = player.Name
-                esp.Name.Visible = true
+                if ESPShowName then
+                    esp.Name.Position = Vector2.new(pos.X, topLeft.Y - 16)
+                    esp.Name.Text = player.Name
+                    esp.Name.Visible = true
+                end
 
-                esp.Info.Position = Vector2.new(pos.X, pos.Y + size.Y / 2 + 5)
-                esp.Info.Text = "HP: " .. math.floor(humanoid.Health) .. " | " .. math.floor(distance) .. "m"
-                esp.Info.Visible = true
+                if ESPShowHealth then
+                    esp.Info.Position = Vector2.new(pos.X, pos.Y + size.Y / 2 + 5)
+                    esp.Info.Text = "HP: " .. math.floor(humanoid.Health) .. " | " .. math.floor(distance) .. "m"
+                    esp.Info.Visible = true
+                end
 
                 if esp.Chams then esp.Chams.Enabled = true end
             else
@@ -168,6 +207,13 @@ AimbotTab:CreateToggle({
     Callback = function(v) AimbotWallCheck = v end
 })
 
+AimbotTab:CreateToggle({
+    Name = "Team Check",
+    CurrentValue = true,
+    Flag = "TeamCheckToggle",
+    Callback = function(v) AimbotTeamCheck = v end
+})
+
 -- DRAW FOV
 local fovCircle = Drawing.new("Circle")
 fovCircle.Color = Color3.fromRGB(255, 255, 255)
@@ -196,6 +242,11 @@ local function GetClosestTarget()
     local closestPlayer, shortestDistance = nil, AimbotFOV
     for _, player in pairs(Players:GetPlayers()) do
         if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
+            -- Checar se está no mesmo time
+            if AimbotTeamCheck and player.Team == LocalPlayer.Team then
+                continue
+            end
+
             local head = player.Character.Head
             local pos, visible = Camera:WorldToViewportPoint(head.Position)
             if visible then
